@@ -1,9 +1,12 @@
 const responseData={
     success:"success",
-    passMismatch:"Password Not Matching",
+    PASSWORD_MISMATCH:"Password Not Matching",
     content:"",
-    userError:"Invalid User",
-    logout:"Successfully Logout"
+    USER_ERROR:"User not found",
+    logout:"Successfully Logout",
+    PASSWORD_SUCCESS_MSG:"Password changed successfully",
+    PASSWORD_FAILURE_MSG:"Password changed failure",
+    NEWPASSWORD_CONFIRMPASSWORD:"New password and confirm password must be same"
  }
 
  module.exports= responseData;
