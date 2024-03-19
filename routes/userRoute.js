@@ -5,14 +5,16 @@ const {getUsers,
       getUserById,
       userLogin,
       userLogout,
-      userVerify}=require("../controller/userController");
+      userVerify,
+      userPassChange}=require("../controller/userController");
 
-router.route("/").get(getUsers);  
+  
 router.route("/").post(createUsers); 
 router.route("/:id").get(getUserById);
 
 router.route("/login").post(userLogin);
 router.route("/loginVerify").get(userVerify);
 router.route("/logout").post(userLogout);
+router.route("/passChange").post(userPassChange);
 
 module.exports = router;
