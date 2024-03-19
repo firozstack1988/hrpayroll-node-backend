@@ -7,8 +7,55 @@ const jwt = require('jsonwebtoken');
 require("dotenv").config();
 require('crypto').randomBytes(64).toString('hex');
 const cookieParser = require('cookie-parser');
-
+const {validator} = require('node-input-validator');
+const { decrypt } = require("dotenv");
+ 
 const secretKey = process.env.TOKEN_SECRET;
+ 
+const userPassChange=(req,res)=>{
+   try{
+      userOldPass=req.body.oldPassword;
+      if(req.body.newPassword!=req.body.confirmPassword){
+         return res.send(responseData.NEWPASSWORD_CONFIRMPASSWORD);
+      }
+      userPassModify(req.body.userId,userOldPass,req.body.newPassword,res);
+    }
+    catch(err){
+        return res.status(400).send({
+         message:err.message,
+         data:err
+     });
+    } 
+ }
+ function userPassModify(userId,userOldPass,newPass,res){
+    try{
+        let sql="select password,user_name,user_role from users where login_user=?";
+        dbpool.query(sql,userId,(err,recordset)=>{
+        if(recordset.length > 0){
+         if(bcrypt.compareSync(userOldPass,recordset[0].password)){ 
+           let sql="update users set password=? where login_user=?";
+           dbpool.query(sql,[bcrypt.hashSync(newPass,10),userId],(err,recordset)=>{
+            if(err)
+               return res.status(200).send(responseData.PASSWORD_FAILURE_MSG);
+            else
+               return res.status(200).send(responseData.PASSWORD_SUCCESS_MSG);
+            });
+         }
+           else{
+               return res.status(200).send(responseData.PASSWORD_MISMATCH);
+           }
+        }
+        else{
+            return res.status(200).send(responseData.USER_ERROR);
+        }
+    }); 
+    }
+   catch(err){
+    return err;
+     }     
+    }
+    
+ 
 
 const userLogin=(req,res)=>{
     const userId=req.body.loginUser;
@@ -27,7 +74,7 @@ const userLogin=(req,res)=>{
                     res.send(responseData.success); 
                 }  
                else
-                    res.send(responseData.passMismatch);    
+                    res.send(responseData.PASSWORD_MISMATCH);    
                });            
                }
                else{
@@ -62,17 +109,7 @@ const userLogout=(req,res)=>{
     res.send(responseData.logout);
 }
 
-const getUsers=(userId)=>{
-    let sql="select password,user_name,user_role from users where login_user=?";
-    dbpool.query(sql,userId,(err,recordset)=>{
-        if(err)
-            console.log(err);        
-        else{
-          let  dbpass=recordset[0].password;
-           return dbpass;
-        }
-    });  
-}
+
 const createUsers=(req,res)=>{
     var user=req.body;
     var hashPass= bcrypt.hashSync(user.password,10);
@@ -97,9 +134,10 @@ const getUserById=(req,res)=>{
      
 }
 
-module.exports={getUsers,
+module.exports={
                createUsers,
                getUserById,
                userLogin,
                userLogout,
-               userVerify};
+               userVerify,
+               userPassChange};
