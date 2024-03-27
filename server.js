@@ -19,6 +19,7 @@ var corsOption={
  app.use("/api/holiday",require("./routes/holidayRoute"));
  app.use("/api/branchConfig",require("./routes/branchConfigRoute"));
  app.use("/api/allowance",require("./routes/allowanceRoute"));
+ app.use("/api/employee",require("./routes/employeeRoute"));
 
  
 app.listen(port,()=>{ 
