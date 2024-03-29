@@ -184,13 +184,23 @@ const getEmployee=(req,res)=>{
         return res.status(200).send(err); 
      }
       return res.status(200).send(result); 
-    });
-     
+    });    
+}
+const getEmployeeByloginId=(req,res)=>{
+    let sq="select * from employee where emp_id=?";
+    dbpool.query(sq,[req.params.id],(err,result)=>{
+     if(err){
+        console.log(err);
+        return res.status(200).send(err); 
+     }
+      return res.status(200).send(result); 
+    });    
 }
 
 module.exports={
                getEmployee,
                createEmployee,
                getEmployeeById,
-               updateEmployee
+               updateEmployee,
+               getEmployeeByloginId
                 };
