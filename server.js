@@ -21,6 +21,7 @@ var corsOption={
  app.use("/api/allowance",require("./routes/allowanceRoute"));
  app.use("/api/employee",require("./routes/employeeRoute"));
  app.use("/api/leavePolicy",require("./routes/leavePolicyRoute"));
+ app.use("/api/leave",require("./routes/leaveRoute"));
 
  
 app.listen(port,()=>{ 
