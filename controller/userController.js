@@ -9,7 +9,8 @@ require('crypto').randomBytes(64).toString('hex');
 const cookieParser = require('cookie-parser');
 const {validator} = require('node-input-validator');
 const { decrypt } = require("dotenv");
- 
+const moment = require("moment"); 
+
 const secretKey = process.env.TOKEN_SECRET;
  
 const userPassChange=(req,res)=>{
@@ -21,10 +22,7 @@ const userPassChange=(req,res)=>{
       userPassModify(req.body.userId,userOldPass,req.body.newPassword,res);
     }
     catch(err){
-        return res.status(400).send({
-         message:err.message,
-         data:err
-     });
+        return res.send({status:responseData.FAILURE,message:err}); 
     } 
  }
  function userPassModify(userId,userOldPass,newPass,res){
@@ -36,27 +34,24 @@ const userPassChange=(req,res)=>{
            let sql="update users set password=? where login_user=?";
            dbpool.query(sql,[bcrypt.hashSync(newPass,10),userId],(err,recordset)=>{
             if(err)
-               return res.status(200).send(responseData.PASSWORD_FAILURE_MSG);
+               return res.send({status:responseData.FAILURE,message:responseData.PASSWORD_FAILURE_MSG});
             else
-               return res.status(200).send(responseData.PASSWORD_SUCCESS_MSG);
+               return res.send({status:responseData.SUCCESS,message:responseData.PASSWORD_SUCCESS_MSG});
             });
          }
-           else{
-               return res.status(200).send(responseData.PASSWORD_MISMATCH);
-           }
+           else
+              return res.send({status:responseData.FAILURE,message:responseData.PASSWORD_MISMATCH}); 
         }
-        else{
-            return res.status(200).send(responseData.USER_ERROR);
-        }
+        else
+             return res.send({status:responseData.FAILURE,message:responseData.USER_ERROR});     
     }); 
     }
    catch(err){
-    return err;
+            return res.send({status:responseData.FAILURE,message:err}); 
      }     
     }
     
  
-
 const userLogin=(req,res)=>{
     const userId=req.body.loginUser;
     const loginpass= req.body.password;
@@ -71,19 +66,21 @@ const userLogin=(req,res)=>{
                     const name=recordset[0].user_name;
                     const token=jwt.sign({name},secretKey,{expiresIn:'30min'});
                     res.cookie('token',token);
-                    res.send(responseData.success); 
+                    res.send({
+                        status:responseData.SUCCESS,message:"Login Success",content:recordset[0].user_role
+                    }); 
                 }  
                else
-                    res.send(responseData.PASSWORD_MISMATCH);    
+                   return res.send({status:responseData.FAILURE,message:responseData.PASSWORD_MISMATCH});    
                });            
                }
                else{
-                 res.send(responseData.userError); 
+                  return res.send({status:responseData.FAILURE,message:"User not found"}); 
                }           
         });
    }
     catch(err){
-        res.send(err);  
+        return res.send({status:responseData.FAILURE,message:err}); 
     }
 }
 
@@ -106,32 +103,92 @@ const userVerify=(req,res,next)=>{
 }
 
 const userLogout=(req,res)=>{
-    res.send(responseData.logout);
+    res.send(responseData.LOGOUT);
 }
 
 
 const createUsers=(req,res)=>{
+    var createdon=moment().format("YYYY-MM-DD HH:mm:ss");
     var user=req.body;
     var hashPass= bcrypt.hashSync(user.password,10);
-    var userData=["",null,user.loginUser,hashPass,"",null,user.userName,user.userRole,user.userType];
-    let sql="INSERT INTO users (created_by,created_on,login_user,password,updated_by,updated_on,user_name,user_role,user_type)VALUES(?)";
-    dbpool.query(sql,[userData],(err,result)=>{
-        if(err)
-            console.log(err);        
-        else
-            res.status(200).json(result); 
-})
+    var userData=[user.createdBy,createdon,user.loginUser,hashPass,"",null,user.userName,user.userRole,user.userType];
+    let sq="select * from employee where emp_id=?";
+    dbpool.query(sq,[req.body.loginUser],(err,result)=>{
+     if(err){
+        console.log(err);
+          return res.send({ status:"failure", message:err });  
+     }
+     if(result.length > 0)
+        insertIntoUser(userData,res); 
+     else
+          return res.send({ status:"failure", message:"Employee id not exists" }); 
+    }); 
+}
+
+const insertIntoUser=(data,res)=>{
+    let userSql="INSERT INTO users (created_by,created_on,login_user,password,updated_by,updated_on,user_name,user_role,user_type)VALUES(?)";
+    dbpool.query(userSql,[data],(err,result)=>{
+        if(err){
+            console.log(err); 
+            return res.send({ status:"failure", message:"Insert failure" });  
+        }        
+        else{
+            return res.send({ status:"success", message:"Record updated" });     
+        }     
+});
 }
 const getUserById=(req,res)=>{
-    let sq="select password,user_name,user_role from users where login_user=?";
+    let sq="select password,user_name,user_role,login_user,user_type from users where login_user=?";
     let empId=req.params.id;
     dbpool.query(sq,empId,(err,result)=>{
      if(err){
         console.log(err);
      }
      res.status(200).json(result); 
-    });
-     
+    });  
+}
+
+const getUserDetailById=(req,res)=>{
+    let sq="select * from users where id=?";
+    let empId=req.params.id;
+    dbpool.query(sq,empId,(err,result)=>{
+     if(err){
+        console.log(err);
+     }
+     res.status(200).json(result); 
+    });  
+}
+
+const updateUser=(req,res)=>{
+    try{
+        var createdon=moment().format("YYYY-MM-DD HH:mm:ss");
+        var year = new Date().getFullYear();
+        var data=req.body;
+        console.log(data);
+        let sql="UPDATE users set user_name= ?,user_role= ?,user_type= ? where id=?";
+          dbpool.query(sql,[data.userName,data.userRole,data.userType,data.id],(err,result)=>{
+             if(err){
+                 console.log(err);
+                  return res.send({ status:"failure", message:"update failure" });  
+             }        
+             else
+                 return res.send({ status:"success", message:"Record updated" });
+          })
+    }
+    catch(err){
+        console.log(err.message);
+         return res.send({ status:"failure", message:err});
+      } 
+}
+
+const getUser=(req,res)=>{
+    let sq="select * from users ";
+    dbpool.query(sq,(err,result)=>{
+     if(err){
+        console.log(err);
+     }
+       res.status(200).json(result); 
+    });  
 }
 
 module.exports={
@@ -140,4 +197,7 @@ module.exports={
                userLogin,
                userLogout,
                userVerify,
-               userPassChange};
+               userPassChange,
+               updateUser,
+               getUser,
+               getUserDetailById};
