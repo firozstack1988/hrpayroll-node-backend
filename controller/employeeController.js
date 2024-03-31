@@ -21,7 +21,7 @@ const createEmployee=(req,res)=>{
             var d=req.body;
             var data=[d.emailAddress,d.designation, d.empId,"",joiningDate,d.mobileNo,d.name,
                 d.deptName,d.branchCode,d.basicAmt,"1",d.supervision,"",null,d.createdby,createdon];
-            var leavData=[d.empId,result[0].year,result[0].sick_leave,result[0].casual_leave,result[0].earned_leave];
+            var leavData=[d.empId,result[0].year,result[0].sick_leave,result[0].casual_leave,result[0].earned_leave,d.branchCode];
             addEmployee(data,res,leavData); 
            } 
           });
@@ -65,7 +65,7 @@ const createEmployee=(req,res)=>{
                                 });
                             }
                             return connection.query(
-                                'INSERT INTO leave_balance (employee_id,year,sick_leave,casual_leave,earned_leave)VALUES(?)', [leavData], (err) => {
+                                'INSERT INTO leave_balance (employee_id,year,sick_leave,casual_leave,earned_leave,branch_code)VALUES(?)', [leavData], (err) => {
                                     if (err) {
                                         return connection.rollback(() => {
                                             connection.release();
@@ -187,8 +187,19 @@ const getEmployee=(req,res)=>{
     });    
 }
 const getEmployeeByloginId=(req,res)=>{
-    let sq="select * from employee where emp_id=?";
-    dbpool.query(sq,[req.params.id],(err,result)=>{
+    let sq="SELECT e.emp_id,e.branch_code,e.dept_name,e.email_address,e.emp_designation,e.mobile_no,e.name,u.user_role,e.joining_date FROM  users u inner join employee e on e.emp_id=u.login_user where e.isActive='1' and e.emp_id=?";
+     dbpool.query(sq,[req.params.id],(err,result)=>{
+     if(err){
+        console.log(err);
+        return res.status(200).send(err); 
+     }
+        return res.status(200).send(result); 
+    });    
+}
+const getLeaveBalByEmpId=(req,res)=>{
+    var year = new Date().getFullYear();
+    let sq="select l.employee_id,l.sick_leave,l.casual_leave,l.earned_leave,l.year,e.emp_designation,e.name from leave_balance l inner join employee e on l.employee_id=e.emp_id  where l.employee_id=? and l.year=?";
+    dbpool.query(sq,[req.params.id,year],(err,result)=>{
      if(err){
         console.log(err);
         return res.status(200).send(err); 
@@ -202,5 +213,6 @@ module.exports={
                createEmployee,
                getEmployeeById,
                updateEmployee,
-               getEmployeeByloginId
+               getEmployeeByloginId,
+               getLeaveBalByEmpId
                 };

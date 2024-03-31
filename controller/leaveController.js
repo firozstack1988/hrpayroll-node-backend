@@ -2,7 +2,6 @@
 const dbpool= require("../config/db");
 const moment = require("moment");
 const responseData=require("../config/responseModel"); 
-//import { format } from 'date-fns';
 
 const getLeave=(req,res)=>{
     var holiData=[];
@@ -20,8 +19,7 @@ const createLeave=(req,res)=>{
     var createdon=moment().format("YYYY-MM-DD HH:mm:ss");
     const formattedFromDate = moment(d.fromDate).format('YYYY-MM-DD');  
     const formattedToDate =  moment(d.toDate).format('YYYY-MM-DD');
-     
-    var data=[d.employeeId,formattedFromDate,d.leaveReason,d.leaveType,d.numberOfDays,formattedToDate,responseData.LEAVE_STATUS_PENDING,d.employeeId,createdon];
+   
     let sq="select * from leave_balance where employee_id=?";
     dbpool.query(sq,[d.employeeId],(err,result)=>{
      if(err){
@@ -44,7 +42,9 @@ const createLeave=(req,res)=>{
                 return res.send({ status:"failure", message:"Earned leave are not available" }); 
              }
         } 
-          insertLeave(data,res); 
+        var data=[d.employeeId,formattedFromDate,d.leaveReason,d.leaveType,d.numberOfDays,formattedToDate,responseData.LEAVE_STATUS_PENDING,d.employeeId,createdon,result[0].branch_code];
+      
+        insertLeave(data,res); 
      }
      else
           return res.send({ status:"failure", message:"No data found in leave balance" }); 
@@ -52,7 +52,8 @@ const createLeave=(req,res)=>{
 }
 
 const insertLeave=(data,res)=>{
-    let sql="INSERT INTO leave_entry (employee_id,from_date,leave_reason,leave_type,number_of_days,to_date,leave_status,created_by,created_on)VALUES(?)";
+    let sql="INSERT INTO leave_entry (employee_id,from_date,leave_reason,leave_type,number_of_days,to_date,leave_status,created_by,created_on,branch_code)VALUES(?)";
+   
     dbpool.query(sql,[data],(err,result)=>{
         if(err){
             console.log(err); 
