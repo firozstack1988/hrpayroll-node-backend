@@ -2,6 +2,7 @@
 const dbpool= require("../config/db");
 const moment = require("moment");
 const responseData=require("../config/responseModel"); 
+//import { format } from 'date-fns';
 
 const getLeave=(req,res)=>{
     var holiData=[];
@@ -17,7 +18,10 @@ const getLeave=(req,res)=>{
 const createLeave=(req,res)=>{
     var d=req.body;
     var createdon=moment().format("YYYY-MM-DD HH:mm:ss");
-    var data=[d.employeeId,d.fromDate,d.leaveReason,d.leaveType,d.numberOfDays,d.toDate,"Pending",d.employeeId,createdon];
+    const formattedFromDate = moment(d.fromDate).format('YYYY-MM-DD');  
+    const formattedToDate =  moment(d.toDate).format('YYYY-MM-DD');
+     
+    var data=[d.employeeId,formattedFromDate,d.leaveReason,d.leaveType,d.numberOfDays,formattedToDate,responseData.LEAVE_STATUS_PENDING,d.employeeId,createdon];
     let sq="select * from leave_balance where employee_id=?";
     dbpool.query(sq,[d.employeeId],(err,result)=>{
      if(err){
@@ -67,8 +71,17 @@ const getLeaveById=(req,res)=>{
         return res.status(200).send(err); 
      }
      return res.status(200).send(result); 
-    });
-     
+    });    
 }
+ const getLeaveStatusByEmpId=(req,res)=>{
+    let sq="select * from leave_entry where employee_id=?";
+    dbpool.query(sq,[req.params.id],(err,result)=>{
+     if(err){
+        console.log(err);
+        return res.status(200).send(err); 
+     }
+       return res.status(200).send(result); 
+    });
+  }
 
-module.exports={getLeave,createLeave,getLeaveById};
+module.exports={getLeave,createLeave,getLeaveById,getLeaveStatusByEmpId};
