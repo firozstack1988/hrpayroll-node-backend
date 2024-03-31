@@ -4,11 +4,12 @@ const router = express.Router();
 const {getLeave,
       createLeave,
       getLeaveById,
-      updateLeave}= require("../controller/leaveController");
+      getLeaveStatusByEmpId}= require("../controller/leaveController");
 
 router.route("/").get(getLeave);
 router.route("/").post(createLeave);
 router.route("/:id").get(getLeaveById);
+router.route("/leaveStatus/:id").get(getLeaveStatusByEmpId);
  
 
 module.exports=router;
