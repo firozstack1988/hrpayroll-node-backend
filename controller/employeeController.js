@@ -22,7 +22,11 @@ const createEmployee=(req,res)=>{
             var data=[d.emailAddress,d.designation, d.empId,"",joiningDate,d.mobileNo,d.name,
                 d.deptName,d.branchCode,d.basicAmt,"1",d.supervision,"",null,d.createdby,createdon];
             var leavData=[d.empId,result[0].year,result[0].sick_leave,result[0].casual_leave,result[0].earned_leave,d.branchCode];
-            addEmployee(data,res,leavData); 
+            var currentMonth = moment().format("MMMM");
+            var currentYear = new Date().getFullYear();
+            var spentLeave='0';
+            var monthlyLeaveData=[d.empId,currentYear,currentMonth,spentLeave,d.branchCode];
+            addEmployee(data,res,leavData,monthlyLeaveData); 
            } 
           });
      }
@@ -30,38 +34,26 @@ const createEmployee=(req,res)=>{
    }
    catch(err){
        console.log(err.message);
-      return res.status(400).send({
-      message:err.message,
-      data:err
-      });
+        return res.status(400).send({message:err.message,data:err });
      }  
     }
 
-    const addEmployee = (data,res,leavData) => {
+    const addEmployee = (data,res,leavData,monthlyLeaveData) => {
             dbpool.getConnection( (err, connection)=> {
                 if (err) 
-                    return res.send({
-                    status:"failure",
-                    message:"Error occurred while getting the connection"
-                    });
+                    return res.send({status:"failure",message:"Error occurred while getting the connection"});
                 
                     return connection.beginTransaction(err => {
                     if (err) {
                         connection.release();
-                        return res.send({
-                            status:"failure",
-                            message:"Error occurred while creating the transaction"
-                            });
+                        return res.send({status:"failure",message:"Error occurred while creating the transaction"});
                     }
                     return connection.query(
                         'INSERT INTO employee (email_address,emp_designation,emp_id,emp_role,joining_date,mobile_no,name,dept_name,branch_code,basic_amt,isActive,supervisor,created_by,created_on,updated_by,updated_on)VALUES(?)', [data], (err) => {
                             if (err) {
                                 return connection.rollback(() => {
                                     connection.release();
-                                    return res.send({
-                                        status:"failure",
-                                        message:"Inserting to employee table failed"
-                                        });
+                                    return res.send({status:"failure",message:"Inserting to employee table failed"});
                                 });
                             }
                             return connection.query(
@@ -69,29 +61,29 @@ const createEmployee=(req,res)=>{
                                     if (err) {
                                         return connection.rollback(() => {
                                             connection.release();
-                                            return res.send({
-                                                status:"failure",
-                                                message:"Inserting to leave_balance table failed"
-                                                });
+                                            return res.send({status:"failure",message:"Inserting to leave_balance table failed"});
                                         });
-                                    }                                
+                                    } 
+                                    return connection.query(
+                                        'INSERT INTO monthly_leave_bal (emp_id,year,month,spent_leave,branch_code)VALUES(?)', [monthlyLeaveData], (err) => {
+                                            if (err) {
+                                                return connection.rollback(() => {
+                                                    connection.release();
+                                                    return res.send({status:"failure",message:"Inserting to monthly_leave_bal table failed"});
+                                                });
+                                            }                                
                                     return connection.commit((err) => {
                                         if (err) {
                                             return connection.rollback(() => {
                                                 connection.release();
-                                                return res.send({
-                                                    status:"failure",
-                                                    message:"Commit failure"
-                                                    });
+                                                return res.send({ status:"failure", message:"Commit failure" });
                                             });
                                         }
                                         connection.release();
-                                         return res.send({
-                                            status:"success",
-                                            message:"Record updated"
-                                            });
+                                         return res.send({status:"success",message:"Record updated"});
                                     });
                                 });
+                            });
                         });
                 });
             });  
@@ -144,7 +136,7 @@ const createEmployee=(req,res)=>{
         try{
             var createdon=moment().format("YYYY-MM-DD HH:mm:ss");
             var year = new Date().getFullYear();
-            var data=req.body;
+            var data=req.body; 
              let sql="UPDATE employee set email_address= ?,emp_designation= ?,mobile_no= ?,name= ? ,dept_name= ?,branch_code= ?,basic_amt= ?,updated_by= ?,updated_on= ? where emp_id=?";
               dbpool.query(sql,[data.emailAddress,data.designation,data.mobileNo,data.name,data.deptName,data.branchCode,data.basicAmt,data.loginUser,createdon,data.empId],(err,result)=>{
                  if(err){
