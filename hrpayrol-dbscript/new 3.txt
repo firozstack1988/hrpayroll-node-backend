@@ -1,0 +1,38 @@
+CREATE TABLE `hrpayroll`.`ACCOUNT_DETAIL` (
+  `ID` BIGINT NOT NULL,
+  `CREDIT_BAL` DOUBLE NOT NULL,
+  `CURR_BAL` DOUBLE NULL,
+  `DEBIT_BAL` DOUBLE NULL,
+  PRIMARY KEY (`ID`));
+  
+  
+  
+  CREATE TABLE `hrpayroll`.`EMP_DETAIL` (
+  `id` BIGINT NOT NULL auto_increment PRIMARY KEY (`id`),
+  `EMP_ID` VARCHAR(50) NULL,
+  `NAME` VARCHAR(50) NULL,
+  `GRADE` VARCHAR(50) NULL,
+  `ADDRESS` VARCHAR(50) NULL,
+  `MOBILE_NO` BIGINT NULL,
+  `ACC_TYPE` VARCHAR(50) NULL,
+  `ACC_NAME` VARCHAR(50) NULL,
+  `ACC_NUMBER` BIGINT NULL,
+  `BANK_NAME` VARCHAR(50) NULL,
+  `BRANCH_NAME` VARCHAR(50) NULL,
+  PRIMARY KEY (`ID`) );
+  
+  CREATE TABLE `hrpayroll`.`TRANSACTION` (
+  `ID` BIGINT NOT NULL,
+  `ACC_NUM` BIGINT NOT NULL,
+  `TRAN_AMOUNT` DOUBLE NULL,
+  `TRAN_DATE` DATE NULL,
+  'TRAN_TYPE' VARCHAR(20),
+  PRIMARY KEY (`ID`));
+  
+  
+  spring.h2.console.enabled=true
+spring.datasource.url=jdbc:h2:mem:dcbapp
+spring.datasource.driverClassName=org.h2.Driver
+spring.datasource.username=sa
+spring.datasource.password=password
+spring.jpa.database-platform=org.hibernate.dialect.H2Dialect
