@@ -22,6 +22,8 @@ var corsOption={
  app.use("/api/employee",require("./routes/employeeRoute"));
  app.use("/api/leavePolicy",require("./routes/leavePolicyRoute"));
  app.use("/api/leave",require("./routes/leaveRoute"));
+ app.use("/api/salaryProcess",require("./routes/salaryProcessRoute"));
+
 
  
 app.listen(port,()=>{ 
